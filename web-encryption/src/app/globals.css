@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #6A7B76;
+  --color-foreground: #040303;
+
+  --font-sans: var(--font-inter-sans);
+  --font-mono: var(--font-inter-mono);
+}
+
+html { color-scheme: light dark; }
+
+body {
+  @apply bg-background text-foreground font-sans;
+}
+
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-background: #6A7B76; 
+    --color-foreground: #040303;
+  }
+}
