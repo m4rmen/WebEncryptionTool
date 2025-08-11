@@ -2,13 +2,34 @@
 import { useState } from 'react';
 import { encryptFileChunked, decryptFileChunked } from '@/lib/crypto/file';
 import { downloadBlob } from '@/lib/storage/download';
+const zxcvbn = require("zxcvbn");
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [password, setPassword] = useState('');
   const [progress, setProgress] = useState(0);
+  const [pwStrength, setPwStrength] = useState<number | null>(null);
   const [busy, setBusy] = useState<'enc'|'dec'|null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  const pwHandleChange = (event: React.ChangeEvent<HTMLInputElement>) =>{
+    const { value } = event.target;
+    setPassword(value);
+    if (!checkFileEncrypted()) {
+      checkPasswordStrength();
+    }
+  }
+
+  const checkPasswordStrength = () => {
+    if (!password) return;
+    const result = zxcvbn(password);
+    setPwStrength(result.score);
+    if (result.score < 3) {
+      setMessage('Password is weak. Please choose a stronger password.');
+    } else {
+      setMessage("Password is strong.");
+    }
+  }
 
   const checkFileEncrypted = () => {
     if (!file) return false;
@@ -18,7 +39,7 @@ export default function Home() {
 
   return (
     <main className="max-w-xl mx-auto p-6 space-y-4">
-      <h1 className="text-2xl font-semibold">Web Encryption Tool</h1>
+      <h1 className="text-2xl font-semibold mt-8">Web Encryption Tool</h1>
 
       <input type="file" className="w-full px-4 py-2 rounded bg-foreground text-background cursor-pointer" onChange={e => setFile(e.target.files?.[0] ?? null)} />
       <input
@@ -26,9 +47,11 @@ export default function Home() {
         placeholder="File Password"
         className="border rounded px-3 py-2 w-full "
         value={password}
-        onChange={e => setPassword(e.target.value)}
+        onChange={e => pwHandleChange(e)}
       />
-
+      <div className={`h-2 rounded overflow-hidden ${(file && !checkFileEncrypted()) ? 'bg-black/10' : ''}`}>
+        <div className="h-full bg-progress" style={{ width: `${Math.round(pwStrength ? (pwStrength/3) * 100 : 0)}%` }} />
+      </div>
       <div className="flex gap-3">
         <button
           type="button"
@@ -82,7 +105,7 @@ export default function Home() {
         </button>
       </div>
 
-      <div className="h-2 bg-black/10 rounded overflow-hidden">
+      <div className="h-2 rounded overflow-hidden">
         <div className="h-full bg-foreground" style={{ width: `${Math.round(progress * 100)}%` }} />
       </div>
       {message && (
